@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { MemoColor } from '@/types';
 
 interface MemoFormProps {
-  onSubmit: (content: string, color: MemoColor) => void;
+  onSubmit: (content: string, color: MemoColor, password: string) => void;
   onCancel: () => void;
 }
 
@@ -21,12 +21,30 @@ const colors: MemoColor[] = ['yellow', 'pink', 'blue', 'green', 'purple'];
 export default function MemoForm({ onSubmit, onCancel }: MemoFormProps) {
   const [content, setContent] = useState('');
   const [color, setColor] = useState<MemoColor>('yellow');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (content.trim()) {
-      onSubmit(content.trim(), color);
+    setError('');
+
+    if (!content.trim()) {
+      setError('메모 내용을 입력하세요.');
+      return;
     }
+
+    if (password.length < 4) {
+      setError('비밀번호는 4자 이상이어야 합니다.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    onSubmit(content.trim(), color, password);
   };
 
   return (
@@ -39,7 +57,7 @@ export default function MemoForm({ onSubmit, onCancel }: MemoFormProps) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="w-full p-3 rounded-lg border border-gray-300 resize-none focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white/70"
-            rows={5}
+            rows={4}
             maxLength={500}
             placeholder="메모 내용을 입력하세요..."
             autoFocus
@@ -69,6 +87,38 @@ export default function MemoForm({ onSubmit, onCancel }: MemoFormProps) {
             </div>
           </div>
 
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              메모 비밀번호 (수정/삭제 시 필요)
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white/70"
+              placeholder="비밀번호 (4자 이상)"
+            />
+          </div>
+
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              비밀번호 확인
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white/70"
+              placeholder="비밀번호 재입력"
+            />
+          </div>
+
+          {error && (
+            <div className="mt-3 p-2 bg-red-100 text-red-700 rounded text-sm">
+              {error}
+            </div>
+          )}
+
           <div className="mt-6 flex gap-3 justify-end">
             <button
               type="button"
@@ -79,7 +129,7 @@ export default function MemoForm({ onSubmit, onCancel }: MemoFormProps) {
             </button>
             <button
               type="submit"
-              disabled={!content.trim()}
+              disabled={!content.trim() || !password || !confirmPassword}
               className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:bg-amber-400 disabled:cursor-not-allowed transition"
             >
               저장

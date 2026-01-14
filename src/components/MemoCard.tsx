@@ -5,8 +5,8 @@ import { Memo, MemoColor } from '@/types';
 
 interface MemoCardProps {
   memo: Memo;
-  onUpdate: (id: string, content: string, color: MemoColor) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, content: string, color: MemoColor, password: string) => Promise<boolean>;
+  onDelete: (id: string, password: string) => Promise<boolean>;
 }
 
 const colorClasses: Record<MemoColor, string> = {
@@ -23,12 +23,57 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(memo.content);
   const [color, setColor] = useState<MemoColor>(memo.color);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState<'edit' | 'delete' | null>(null);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
-    if (content.trim()) {
-      onUpdate(memo.id, content, color);
+  const handleEditClick = () => {
+    setShowPasswordModal('edit');
+    setPassword('');
+    setError('');
+  };
+
+  const handleDeleteClick = () => {
+    setShowPasswordModal('delete');
+    setPassword('');
+    setError('');
+  };
+
+  const handlePasswordSubmit = async () => {
+    if (!password) {
+      setError('비밀번호를 입력하세요.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    if (showPasswordModal === 'edit') {
+      setIsEditing(true);
+      setShowPasswordModal(null);
+      setLoading(false);
+    } else if (showPasswordModal === 'delete') {
+      const success = await onDelete(memo.id, password);
+      if (!success) {
+        setError('비밀번호가 올바르지 않습니다.');
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!content.trim()) return;
+
+    setLoading(true);
+    const success = await onUpdate(memo.id, content, color, password);
+    setLoading(false);
+
+    if (success) {
       setIsEditing(false);
+      setPassword('');
+    } else {
+      setError('비밀번호가 올바르지 않습니다.');
     }
   };
 
@@ -36,11 +81,8 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
     setContent(memo.content);
     setColor(memo.color);
     setIsEditing(false);
-  };
-
-  const handleDelete = () => {
-    onDelete(memo.id);
-    setShowDeleteConfirm(false);
+    setPassword('');
+    setError('');
   };
 
   const formatDate = (dateString: string) => {
@@ -92,12 +134,16 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
               />
             ))}
           </div>
+          {error && (
+            <div className="text-red-600 text-xs">{error}</div>
+          )}
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700"
+              disabled={loading}
+              className="px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700 disabled:bg-amber-400"
             >
-              저장
+              {loading ? '저장 중...' : '저장'}
             </button>
             <button
               onClick={handleCancel}
@@ -111,7 +157,7 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
         <>
           <div
             className="whitespace-pre-wrap break-words cursor-pointer mb-4 min-h-[60px]"
-            onClick={() => setIsEditing(true)}
+            onClick={handleEditClick}
             style={{ fontFamily: 'var(--font-memo, sans-serif)' }}
           >
             {memo.content}
@@ -122,7 +168,7 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
               {formatDate(memo.updated_at)}
             </span>
             <button
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={handleDeleteClick}
               className="text-red-500 hover:text-red-700 text-sm opacity-50 hover:opacity-100 transition"
             >
               삭제
@@ -131,20 +177,43 @@ export default function MemoCard({ memo, onUpdate, onDelete }: MemoCardProps) {
         </>
       )}
 
-      {/* 삭제 확인 모달 */}
-      {showDeleteConfirm && (
-        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-          <div className="bg-white p-4 rounded-lg shadow-lg text-center">
-            <p className="mb-4 text-gray-800">삭제하시겠습니까?</p>
-            <div className="flex gap-2 justify-center">
+      {/* 비밀번호 확인 모달 */}
+      {showPasswordModal && (
+        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center z-10">
+          <div className="bg-white p-4 rounded-lg shadow-lg w-full mx-4">
+            <p className="mb-3 text-gray-800 font-medium text-center">
+              {showPasswordModal === 'edit' ? '수정하기' : '삭제하기'}
+            </p>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
+              placeholder="비밀번호 입력"
+              autoFocus
+            />
+            {error && (
+              <div className="mt-2 text-red-600 text-xs text-center">{error}</div>
+            )}
+            <div className="flex gap-2 justify-center mt-4">
               <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                onClick={handlePasswordSubmit}
+                disabled={loading}
+                className={`px-4 py-2 text-white rounded ${
+                  showPasswordModal === 'delete'
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                } disabled:opacity-50`}
               >
-                삭제
+                {loading ? '확인 중...' : '확인'}
               </button>
               <button
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={() => {
+                  setShowPasswordModal(null);
+                  setPassword('');
+                  setError('');
+                }}
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
               >
                 취소

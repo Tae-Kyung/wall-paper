@@ -41,23 +41,54 @@ export function useMemos(wallId: string | null) {
   }, [fetchMemos]);
 
   const createMemo = async (input: CreateMemoInput): Promise<boolean> => {
-    const { data, error: createError } = await supabase
-      .from('memos')
-      .insert([input])
-      .select()
-      .single();
+    try {
+      const response = await fetch('/api/memos/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
 
-    if (createError) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || '메모 생성에 실패했습니다.');
+        return false;
+      }
+
+      setMemos((prev) => [data.memo, ...prev]);
+      return true;
+    } catch (err) {
+      console.error('Create memo error:', err);
       setError('메모 생성에 실패했습니다.');
-      console.error('Create memo error:', createError);
+      return false;
+    }
+  };
+
+  const verifyPassword = async (memoId: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/memos/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memoId, password }),
+      });
+
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const updateMemo = async (
+    id: string,
+    input: UpdateMemoInput,
+    password: string
+  ): Promise<boolean> => {
+    // 먼저 비밀번호 검증
+    const isValid = await verifyPassword(id, password);
+    if (!isValid) {
       return false;
     }
 
-    setMemos((prev) => [data, ...prev]);
-    return true;
-  };
-
-  const updateMemo = async (id: string, input: UpdateMemoInput): Promise<boolean> => {
     const { data, error: updateError } = await supabase
       .from('memos')
       .update({ ...input, updated_at: new Date().toISOString() })
@@ -77,7 +108,13 @@ export function useMemos(wallId: string | null) {
     return true;
   };
 
-  const deleteMemo = async (id: string): Promise<boolean> => {
+  const deleteMemo = async (id: string, password: string): Promise<boolean> => {
+    // 먼저 비밀번호 검증
+    const isValid = await verifyPassword(id, password);
+    if (!isValid) {
+      return false;
+    }
+
     const { error: deleteError } = await supabase
       .from('memos')
       .delete()

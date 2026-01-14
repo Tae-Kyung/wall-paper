@@ -33,13 +33,14 @@ export default function WallPage() {
     }
   }, [router]);
 
-  const handleCreateMemo = async (content: string, color: MemoColor) => {
+  const handleCreateMemo = async (content: string, color: MemoColor, password: string) => {
     if (!authState.wallId) return;
 
     const success = await createMemo({
       wall_id: authState.wallId,
       content,
       color,
+      password,
     });
 
     if (success) {
@@ -47,12 +48,12 @@ export default function WallPage() {
     }
   };
 
-  const handleUpdateMemo = async (id: string, content: string, color: MemoColor) => {
-    await updateMemo(id, { content, color });
+  const handleUpdateMemo = async (id: string, content: string, color: MemoColor, password: string): Promise<boolean> => {
+    return await updateMemo(id, { content, color }, password);
   };
 
-  const handleDeleteMemo = async (id: string) => {
-    await deleteMemo(id);
+  const handleDeleteMemo = async (id: string, password: string): Promise<boolean> => {
+    return await deleteMemo(id, password);
   };
 
   if (!mounted || !authState.isAuthenticated) {

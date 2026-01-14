@@ -7,8 +7,8 @@ interface MemoListProps {
   memos: Memo[];
   loading: boolean;
   error: string | null;
-  onUpdate: (id: string, content: string, color: MemoColor) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (id: string, content: string, color: MemoColor, password: string) => Promise<boolean>;
+  onDelete: (id: string, password: string) => Promise<boolean>;
 }
 
 export default function MemoList({

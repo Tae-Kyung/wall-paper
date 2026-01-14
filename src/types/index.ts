@@ -11,6 +11,7 @@ export interface Memo {
   wall_id: string;
   content: string;
   color: MemoColor;
+  password_hash: string;
   is_pinned: boolean;
   created_at: string;
   updated_at: string;
@@ -22,6 +23,7 @@ export interface CreateMemoInput {
   wall_id: string;
   content: string;
   color?: MemoColor;
+  password: string;
 }
 
 export interface UpdateMemoInput {
