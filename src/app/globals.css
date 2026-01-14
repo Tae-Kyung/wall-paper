@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fffbeb;
+  --foreground: #171717;
+  --font-memo: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-memo);
+}
+
+/* 포스트잇 그림자 효과 */
+.memo-shadow {
+  box-shadow:
+    2px 2px 5px rgba(0, 0, 0, 0.1),
+    4px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* 메모 호버 효과 */
+.memo-hover:hover {
+  transform: scale(1.02) rotate(0deg) !important;
+  z-index: 10;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4a574;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b8956a;
+}

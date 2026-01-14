@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(curl -s \"https://bcrangkhejfwskwglxmy.supabase.co/rest/v1/walls?select=id,name,password_hash\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjcmFuZ2toZWpmd3Nrd2dseG15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzMjkyNzcsImV4cCI6MjA4MzkwNTI3N30.Q0q_TZMLE_EVCL_lbRIIZmNKaIfbR0CwSRegA7iVsyE\")"
+    ]
+  }
+}
